@@ -10,37 +10,39 @@ public class Draggable : MonoBehaviour
 	public bool fixY;
 	public Transform thumb;	
 	public bool dragging;
-    private GameObject space;
+    private GameObject shape_space;
+    private GameObject sketch_space;
+
 
     private void Start()
     {
         thumb.localPosition = thumb.localPosition = new Vector3(0.0f, 0.0f, -0.001f);
-        space = GameObject.Find("space");
+        shape_space = GameObject.Find("shape_space");
+        sketch_space = GameObject.Find("sketch_space");
+
     }
     void FixedUpdate()
 	{
-        
-        if (OVRInput.GetDown(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch))
+
+        //if (OVRInput.GetDown(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch))
+        if (OVRInput.GetDown(OVRInput.Button.One))
         {
-            
             dragging = false;
-            space.GetComponent<BoxCollider>().enabled = true;
             Ray ray = new Ray(rightController.transform.position, rightController.transform.forward);
-            // var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (GetComponent<Collider>().Raycast(ray, out hit, 100))
             {
                 dragging = true;
-                space.GetComponent<BoxCollider>().enabled = false;
             }
         }
-  
-        if (OVRInput.GetUp(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch)) dragging = false;
+
+        //if (OVRInput.GetUp(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch)) dragging = false;
+        if (OVRInput.GetUp(OVRInput.Button.One)) dragging = false;
         // if (Input.GetMouseButtonUp(0)) dragging = false;
-        if (dragging && OVRInput.Get(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch))
+        //if (dragging && OVRInput.Get(OVRInput.Button.SecondaryHandTrigger, OVRInput.Controller.Touch))
+        if (dragging && OVRInput.Get(OVRInput.Button.One))
         {
             Ray ray = new Ray(rightController.transform.position, rightController.transform.forward);
-            // var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (GetComponent<Collider>().Raycast(ray, out hit, 100))
             {
@@ -62,7 +64,6 @@ public class Draggable : MonoBehaviour
 
 	void SetThumbPosition(Vector3 point)
 	{
-        //thumb.position = new Vector3(fixX ? thumb.position.x : point.x, fixY ? thumb.position.y : point.y, thumb.position.z);
         Vector3 temp = thumb.localPosition;
         thumb.position = point;
         thumb.localPosition = new Vector3(fixX ? temp.x : thumb.localPosition.x, fixY ? temp.y : thumb.localPosition.y, thumb.localPosition.z - 1);

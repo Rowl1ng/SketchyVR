@@ -1,3 +1,7 @@
+#if USING_XR_MANAGEMENT && USING_XR_SDK_OCULUS
+#define USING_XR_SDK
+#endif
+
 namespace Oculus.Platform
 {
   using System;
@@ -78,7 +82,7 @@ namespace Oculus.Platform
           bool HasTestAccessToken = !String.IsNullOrEmpty(StandalonePlatformSettings.OculusPlatformTestUserAccessToken);
           if (PlatformSettings.UseStandalonePlatform)
           {
-            if (!HasTestAccessToken && 
+            if (!HasTestAccessToken &&
             (String.IsNullOrEmpty(StandalonePlatformSettings.OculusPlatformTestUserEmail) ||
             String.IsNullOrEmpty(StandalonePlatformSettings.OculusPlatformTestUserPassword)))
             {
@@ -98,7 +102,12 @@ namespace Oculus.Platform
 
           var useStandaloneLabel = "Use Standalone Platform [?]";
           var useStandaloneHint = "If this is checked your app will use a debug platform with the User info below.  "
-            + "Otherwise your app will connect to the Oculus Platform.  This setting only applies to the Unity Editor";
+            + "Otherwise your app will connect to the Oculus Platform.  This setting only applies to the Unity Editor on Windows";
+
+#if !UNITY_STANDALONE_WIN
+          PlatformSettings.UseStandalonePlatform = false;
+          GUI.enabled = false;
+#endif
           PlatformSettings.UseStandalonePlatform =
             MakeToggle(new GUIContent(useStandaloneLabel, useStandaloneHint), PlatformSettings.UseStandalonePlatform);
 
@@ -161,16 +170,19 @@ namespace Oculus.Platform
       if (isBuildSettingsExpanded)
       {
         GUIHelper.HInset(6, () => {
+#if !USING_XR_SDK
+#if UNITY_2020_1_OR_NEWER
+          EditorGUILayout.HelpBox("The Oculus XR Plugin isn't enabled from XR Plugin Management in Project Settings", MessageType.Warning);
+#else
           if (!PlayerSettings.virtualRealitySupported)
           {
             EditorGUILayout.HelpBox("VR Support isn't enabled in the Player Settings", MessageType.Warning);
           }
-          else
-          {
-            EditorGUILayout.HelpBox("VR Support is enabled", MessageType.Info);
-          }
 
           PlayerSettings.virtualRealitySupported = MakeToggle(new GUIContent("Virtual Reality Support"), PlayerSettings.virtualRealitySupported);
+#endif
+#endif
+
           PlayerSettings.bundleVersion = MakeTextBox(new GUIContent("Bundle Version"), PlayerSettings.bundleVersion);
 #if UNITY_5_3 || UNITY_5_4 || UNITY_5_5
           PlayerSettings.bundleIdentifier = MakeTextBox(new GUIContent("Bundle Identifier"), PlayerSettings.bundleIdentifier);
@@ -188,32 +200,18 @@ namespace Oculus.Platform
 #endif
           if (!canEnableARM64Support)
           {
-            EditorGUILayout.HelpBox("ARM64 support requires Unity 2018.1.x or higher.", MessageType.Info);
-            if (PlatformSettings.EnableARM64Support)
+            var msg = "Update your Unity Editor to 2018.1.x or newer to enable Arm64 support";
+            EditorGUILayout.HelpBox(msg, MessageType.Warning);
+            if (IsArm64PluginPlatformEnabled())
             {
-              PlatformSettings.EnableARM64Support = false;
               DisablePluginPlatform(PluginPlatform.Android64);
             }
           }
-
-          GUI.enabled = canEnableARM64Support;
-
-          var enableARM64Label = "Enable ARM64 Support [?]";
-          var enableARM64Hint = "[Experimental] If this is checked, Oculus Platform SDK support for ARM64 mobile devices will be enabled."
-      + " Support for ARM64 must also be correctly configured in the Unity Player Settings to use this feature. Requires Unity 2018.1.x or higher.";
-      bool prevEnableARM64Support = PlatformSettings.EnableARM64Support;
-          PlatformSettings.EnableARM64Support =
-            MakeToggle(new GUIContent(enableARM64Label, enableARM64Hint), PlatformSettings.EnableARM64Support);
-
-          if (prevEnableARM64Support != PlatformSettings.EnableARM64Support)
+          else
           {
-            if (PlatformSettings.EnableARM64Support)
+            if (!IsArm64PluginPlatformEnabled())
             {
               EnablePluginPlatform(PluginPlatform.Android64);
-            }
-            else
-            {
-              DisablePluginPlatform(PluginPlatform.Android64);
             }
           }
 
@@ -290,8 +288,8 @@ namespace Oculus.Platform
 
     public enum PluginPlatform
     {
-        Android32,
-        Android64
+      Android32,
+      Android64
     }
 
     private static string GetCurrentProjectPath()
@@ -332,8 +330,8 @@ namespace Oculus.Platform
     //[UnityEditor.MenuItem("Oculus/Platform/EnforcePluginPlatformSettings")]
     public static void EnforcePluginPlatformSettings()
     {
-        EnforcePluginPlatformSettings(PluginPlatform.Android32);
-        EnforcePluginPlatformSettings(PluginPlatform.Android64);
+      EnforcePluginPlatformSettings(PluginPlatform.Android32);
+      EnforcePluginPlatformSettings(PluginPlatform.Android64);
     }
 
     public static void EnforcePluginPlatformSettings(PluginPlatform platform)
@@ -394,6 +392,13 @@ namespace Oculus.Platform
         AssetDatabase.Refresh();
         AssetDatabase.SaveAssets();
       }
+    }
+
+    public static bool IsArm64PluginPlatformEnabled()
+    {
+      string path = GetPlatformPluginPath(PluginPlatform.Android64);
+      bool pathAlreadyExists = Directory.Exists(path) || File.Exists(path);
+      return pathAlreadyExists;
     }
 
     public static void EnablePluginPlatform(PluginPlatform platform)

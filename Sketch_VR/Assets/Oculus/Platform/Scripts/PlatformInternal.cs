@@ -14,6 +14,7 @@ namespace Oculus.Platform
   {
     // Keep this enum in sync with ovrMessageTypeInternal in OVR_Platform_Internal.h
     public enum MessageTypeInternal : uint { //TODO - rename this to type; it's already in Message class
+      AbuseReport_LaunchAdvancedReportFlow          = 0x4CB13A6E,
       Application_ExecuteCoordinatedLaunch          = 0x267DB4F4,
       Application_GetInstalledApplications          = 0x520F744C,
       Avatar_UpdateMetaData                         = 0x7BCFD98E,
@@ -36,6 +37,20 @@ namespace Oculus.Platform
       Livestreaming_StopStream                      = 0x44E40DCA,
       Livestreaming_UpdateCommentsOverlayVisibility = 0x1F7D8034,
       Livestreaming_UpdateMicStatus                 = 0x1C577D87,
+      NetSync_Connect                               = 0x646D855F,
+      NetSync_Disconnect                            = 0x1569FEB5,
+      NetSync_GetSessions                           = 0x6ED60A35,
+      NetSync_GetVoipAttenuation                    = 0x112ACA17,
+      NetSync_GetVoipAttenuationDefault             = 0x577BA8A0,
+      NetSync_SetVoipAttenuation                    = 0x3497D7F6,
+      NetSync_SetVoipAttenuationModel               = 0x6A94AD8E,
+      NetSync_SetVoipChannelCfg                     = 0x5C95A4F3,
+      NetSync_SetVoipGroup                          = 0x58129C8E,
+      NetSync_SetVoipListentoChannels               = 0x5ED0EA32,
+      NetSync_SetVoipMicSource                      = 0x3302F770,
+      NetSync_SetVoipSessionMuted                   = 0x5585FF0A,
+      NetSync_SetVoipSpeaktoChannels                = 0x2DAFCDD5,
+      NetSync_SetVoipStreamMode                     = 0x67E19D37,
       Party_Create                                  = 0x1AD31B4F,
       Party_GatherInApplication                     = 0x7287C183,
       Party_Get                                     = 0x5E8953BD,
@@ -43,6 +58,10 @@ namespace Oculus.Platform
       Party_Invite                                  = 0x35B5C4E3,
       Party_Join                                    = 0x68027C73,
       Party_Leave                                   = 0x329206D1,
+      RichPresence_SetDestination                   = 0x4F32E10D,
+      RichPresence_SetIsJoinable                    = 0x3E9B1F61,
+      RichPresence_SetLobbySession                  = 0x71010917,
+      RichPresence_SetMatchSession                  = 0x63DFFC8E,
       Room_CreateOrUpdateAndJoinNamed               = 0x7C8E0A91,
       Room_GetNamedRooms                            = 0x077D6E8C,
       Room_GetSocialRooms                           = 0x61881D76,
@@ -90,7 +109,18 @@ namespace Oculus.Platform
         case MessageTypeInternal.Colocation_ShareMap:
         case MessageTypeInternal.Livestreaming_StopPartyStream:
         case MessageTypeInternal.Livestreaming_UpdateMicStatus:
+        case MessageTypeInternal.NetSync_SetVoipAttenuation:
+        case MessageTypeInternal.NetSync_SetVoipAttenuationModel:
+        case MessageTypeInternal.NetSync_SetVoipChannelCfg:
+        case MessageTypeInternal.NetSync_SetVoipGroup:
+        case MessageTypeInternal.NetSync_SetVoipListentoChannels:
+        case MessageTypeInternal.NetSync_SetVoipMicSource:
+        case MessageTypeInternal.NetSync_SetVoipSpeaktoChannels:
         case MessageTypeInternal.Party_Leave:
+        case MessageTypeInternal.RichPresence_SetDestination:
+        case MessageTypeInternal.RichPresence_SetIsJoinable:
+        case MessageTypeInternal.RichPresence_SetLobbySession:
+        case MessageTypeInternal.RichPresence_SetMatchSession:
         case MessageTypeInternal.User_CancelRecordingForReportFlow:
         case MessageTypeInternal.User_TestUserCreateDeviceManifest:
           message = new Message(messageHandle);
@@ -104,6 +134,7 @@ namespace Oculus.Platform
           message = new MessageWithLaunchBlockFlowResult(messageHandle);
           break;
 
+        case MessageTypeInternal.AbuseReport_LaunchAdvancedReportFlow:
         case MessageTypeInternal.User_LaunchReportFlow2:
           message = new MessageWithLaunchReportFlowResult(messageHandle);
           break;
@@ -131,6 +162,25 @@ namespace Oculus.Platform
 
         case MessageTypeInternal.Livestreaming_StopStream:
           message = new MessageWithLivestreamingVideoStats(messageHandle);
+          break;
+
+        case MessageTypeInternal.NetSync_Connect:
+        case MessageTypeInternal.NetSync_Disconnect:
+          message = new MessageWithNetSyncConnection(messageHandle);
+          break;
+
+        case MessageTypeInternal.NetSync_GetSessions:
+          message = new MessageWithNetSyncSessionList(messageHandle);
+          break;
+
+        case MessageTypeInternal.NetSync_SetVoipSessionMuted:
+        case MessageTypeInternal.NetSync_SetVoipStreamMode:
+          message = new MessageWithNetSyncSetSessionPropertyResult(messageHandle);
+          break;
+
+        case MessageTypeInternal.NetSync_GetVoipAttenuation:
+        case MessageTypeInternal.NetSync_GetVoipAttenuationDefault:
+          message = new MessageWithNetSyncVoipAttenuationValueList(messageHandle);
           break;
 
         case MessageTypeInternal.Party_Get:

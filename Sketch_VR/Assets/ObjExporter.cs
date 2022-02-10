@@ -393,86 +393,97 @@ public class ObjExporter : MonoBehaviour
         MaterialsToFile(materialList, folder, filename);
     }
 
-    public void DoExportsPointsFromGame(GameObject[] sketchs, GameObject[] reference, string folder, string filename)
+    public void DoExportsPointsFromGame(GameObject[] sketchs, string folder, string filename)
     {
         int exportedObjects = 0;
         ArrayList PointsList = new ArrayList();
-        GameObject space = GameObject.Find("space");
+        ArrayList EdgesList = new ArrayList();
+        GameObject sketch_space = GameObject.Find("sketch_space");
+        int index = 1;
         for (int i = 0; i < sketchs.Length; i++)
         {
-            LineRenderer lr = sketchs[i].GetComponent<LineRenderer>();
-            Vector3[] Pts = new Vector3[lr.positionCount];
-            lr.GetPositions(Pts);
+            TubeRenderer lr = sketchs[i].GetComponent<TubeRenderer>();
+            Vector3[] Pts = lr.GetPositions();
             for (int j = 0; j < Pts.Length; j++)
             {
                 Vector3 wv = sketchs[i].transform.TransformPoint(Pts[j]);
-                Vector3 rv = space.transform.InverseTransformPoint(wv);
+                Vector3 rv = sketch_space.transform.InverseTransformPoint(wv);
                 PointsList.Add(rv);
+                if (j < Pts.Length - 1)
+                {
+                    EdgesList.Add(index);
+                }
+                index++;
+
             }
             exportedObjects++;
         }
 
         
         Vector3 point = new Vector3();
-        using (StreamWriter sw = new StreamWriter(folder + Path.DirectorySeparatorChar + filename + "_sketch.off"))
+        using (StreamWriter sw = new StreamWriter(folder + Path.DirectorySeparatorChar + filename + "_sketch.obj"))
         {
-            sw.Write("OFF\n");
-            sw.Write(PointsList.Count+" 0 0\n");
+            //sw.Write("OFF\n");
+            //sw.Write(PointsList.Count+" 0 0\n");
             for (int i = 0; i < PointsList.Count; i++)
             {
                 point = (Vector3)PointsList[i];
-                sw.WriteLine(point[0] + " " + point[1] + " " + point[2]);
+                sw.WriteLine("v " + point[0] + " " + point[1] + " " + point[2]);
+            }
+            for (int i = 0; i < EdgesList.Count; i++)
+            {
+                index = (int)EdgesList[i];
+                sw.WriteLine("l " + index + " " + (index+1));
             }
         }
 
         Debug.Log("Objects exported: " + "Exported " + exportedObjects + " objects to " + filename + " with " + PointsList.Count + "points.");
 
 
-        
+   
+        //if (reference[0].GetComponentInChildren<Renderer>().enabled)
+        //{
+        //    // Add mesh of lines to meshfilter_obj
 
-        if (reference[0].GetComponentInChildren<Renderer>().enabled)
-        {
-            // Add mesh of lines to meshfilter_obj
+        //    List<MeshFilter> filter_list = new List<MeshFilter>();
 
-            List<MeshFilter> filter_list = new List<MeshFilter>();
+        //    for (int i = 0; i < sketchs.Length; i++)
+        //    {
+        //        GameObject go = new GameObject();
+        //        go.transform.SetParent(space.transform);
+        //        go.tag = "Mesh_Line";
+        //        Mesh ml = go.AddComponent<MeshFilter>().mesh;
+        //        go.AddComponent<MeshRenderer>();
+        //        currLine = go.AddComponent<MeshLineRenderer>();
+        //        currLine.lmat = GameObject.Find("DyLine").GetComponent<LineRenderer>().material;
+        //        currLine.ml = ml;
+        //        currLine.setWidth(0.01f);
 
-            for (int i = 0; i < sketchs.Length; i++)
-            {
-                GameObject go = new GameObject();
-                go.transform.SetParent(space.transform);
-                go.tag = "Mesh_Line";
-                Mesh ml = go.AddComponent<MeshFilter>().mesh;
-                go.AddComponent<MeshRenderer>();
-                currLine = go.AddComponent<MeshLineRenderer>();
-                currLine.lmat = GameObject.Find("DyLine").GetComponent<LineRenderer>().material;
-                currLine.ml = ml;
-                currLine.setWidth(0.01f);
+        //        LineRenderer lr = sketchs[i].GetComponent<LineRenderer>();
+        //        Vector3[] points = new Vector3[lr.positionCount];
+        //        lr.GetPositions(points);
+        //        for (int j = 0; j < points.Length; j++)
+        //        {
+        //            Vector3 wv = sketchs[i].transform.TransformPoint(points[j]);
+        //            currLine.AddPoint(wv);
+        //        }
+        //        filter_list.Add(go.GetComponent<MeshFilter>());
+        //    }
 
-                LineRenderer lr = sketchs[i].GetComponent<LineRenderer>();
-                Vector3[] points = new Vector3[lr.positionCount];
-                lr.GetPositions(points);
-                for (int j = 0; j < points.Length; j++)
-                {
-                    Vector3 wv = sketchs[i].transform.TransformPoint(points[j]);
-                    currLine.AddPoint(wv);
-                }
-                filter_list.Add(go.GetComponent<MeshFilter>());
-            }
+        //    MeshFilter[] meshfilter_obj = reference[0].transform.GetComponentsInChildren<MeshFilter>();
+        //    //MeshFilter[] meshfilter_obj = space.transform.GetComponentsInChildren<MeshFilter>();
+        //    filter_list.AddRange(meshfilter_obj);
+        //    //MeshesToFile(meshfilter_obj, folder, filename + "_ref");
+        //    MeshesToFile(filter_list.ToArray(), folder, filename + "_ref");
+        //    Debug.Log("Save Reference into OBJ: " + reference[0].name);
 
-            MeshFilter[] meshfilter_obj = reference[0].transform.GetComponentsInChildren<MeshFilter>();
-            //MeshFilter[] meshfilter_obj = space.transform.GetComponentsInChildren<MeshFilter>();
-            filter_list.AddRange(meshfilter_obj);
-            //MeshesToFile(meshfilter_obj, folder, filename + "_ref");
-            MeshesToFile(filter_list.ToArray(), folder, filename + "_ref");
-            Debug.Log("Save Reference into OBJ: " + reference[0].name);
+        //    //Delete Meshes of Lines
+        //    GameObject[] delete = GameObject.FindGameObjectsWithTag("Mesh_Line");
+        //    int deleteCount = delete.Length;//.Length();
+        //    for (int i = deleteCount - 1; i >= 0; i--)
+        //        Destroy(delete[i]);
 
-            //Delete Meshes of Lines
-            GameObject[] delete = GameObject.FindGameObjectsWithTag("Mesh_Line");
-            int deleteCount = delete.Length;//.Length();
-            for (int i = deleteCount - 1; i >= 0; i--)
-                Destroy(delete[i]);
-
-        }
+        //}
 
     }
 
@@ -490,7 +501,7 @@ public class ObjExporter : MonoBehaviour
                 {
                     List<float> point = timestamps[j];
 
-                    sw.WriteLine(point[0] + " " + point[1] + " " + point[2] + " " + point[3]);
+                    sw.WriteLine(point[0] + " " + point[1] + " " + point[2] + " " + point[3]  + " " + point[4]);
                 }
             }
 

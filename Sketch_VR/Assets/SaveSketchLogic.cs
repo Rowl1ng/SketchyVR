@@ -9,11 +9,13 @@ public class SaveSketchLogic : MonoBehaviour
 {
     private GameObject PointLineManager;
     public bool save_meta_info;
+    public bool saved;
     [SerializeField] private TextMeshProUGUI saveinfo;
 
     private void Start()
     {
         PointLineManager = GameObject.Find("PointLineManager");
+        saved = false;
     }
 
     public void SaveSketch()
@@ -21,24 +23,18 @@ public class SaveSketchLogic : MonoBehaviour
         GameObject[] sketch = GameObject.FindGameObjectsWithTag("Dynamic_Line");
         if (sketch.Length == 0)
         {
-            Debug.LogError("Sketch doesn't exist.");
+            saveinfo.text = "Sketch doesn't exist.";
+            Debug.Log("Sketch doesn't exist.");
         }
         else
         {
-            GameObject[] reference = GameObject.FindGameObjectsWithTag("reference");
-            string sketch_type = "";
-
-            if (reference[0].GetComponentInChildren<Renderer>().enabled)
-            { sketch_type = "w"; }
-            else
-            { sketch_type = "o"; }
             string folder = PlayerManager.save_dir;
-            string filename = PlayerManager.model_id.Replace(Path.DirectorySeparatorChar+"", "_") + "_" + sketch_type + "_" + PlayerManager.player_id + "_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+            string filename = PlayerManager.model_id.Replace(Path.DirectorySeparatorChar + "", "_") + "_" + PlayerManager.player_id + "_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
 
             ObjExporter ObjExporter = GameObject.Find("ObjExporter").GetComponent<ObjExporter>();
 
 
-            ObjExporter.DoExportsPointsFromGame(sketch, reference, folder, filename);
+            ObjExporter.DoExportsPointsFromGame(sketch, folder, filename);
 
             Debug.Log("Save a Sketch with " + sketch.Length + " strokes!");
 
@@ -47,6 +43,7 @@ public class SaveSketchLogic : MonoBehaviour
                 ObjExporter.DoExportsMetaInfo(PointLineManager.GetComponent<PointLineManager>().all_timestamps, folder, filename);
             }
             saveinfo.text = "Save:" + filename;
+            saved = true;
         }
     }
 
